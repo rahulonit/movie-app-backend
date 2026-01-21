@@ -7,13 +7,13 @@ import helmet from "helmet";
 import morgan from "morgan";
 import compression from "compression";
 
-import { connectDB } from "./config/database.js";
+import { connectDB } from "./config/database";
 
 // routes
-import authRoutes from "./routes/authRoutes.js";
-import contentRoutes from "./routes/contentRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
+import authRoutes from "./routes/authRoutes";
+import contentRoutes from "./routes/contentRoutes";
+import userRoutes from "./routes/userRoutes";
+import adminRoutes from "./routes/adminRoutes";
 
 const app = express();
 
