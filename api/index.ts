@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import cors from "cors";
 
 const app = express();
@@ -6,9 +6,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.get("/api/health", (req, res) => {
+app.get("/api/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
 
-// 🚨 DO NOT listen on a port
 export default app;
