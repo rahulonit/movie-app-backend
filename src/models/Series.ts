@@ -198,7 +198,6 @@ const seriesSchema = new Schema<ISeries>({
   }
 }, {
   timestamps: true,
-  languageOverride: 'searchLanguage'
 });
 
 // Indexes for performance
