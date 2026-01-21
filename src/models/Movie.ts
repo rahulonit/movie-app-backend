@@ -181,7 +181,6 @@ const movieSchema = new Schema<IMovie>({
   }
 }, {
   timestamps: true,
-  languageOverride: 'searchLanguage'
 });
 
 // Indexes for performance
