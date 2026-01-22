@@ -220,11 +220,22 @@ npm run build
 2. Set production environment variables
 
 3. Deploy to your preferred platform:
-   - AWS EC2
-   - Digital Ocean
-   - Heroku
-   - Railway
-   - Render
+  - AWS EC2
+  - Digital Ocean
+  - Heroku
+  - Railway
+  - Render
+  - Vercel (serverless)
+
+### Vercel quick setup (monorepo)
+
+- Project root: set to `backend/` (or keep repo root and use the provided `vercel.json`).
+- Install command: `npm install`
+- Build command: `npm run build`
+- Output directory: leave empty (Node serverless function).
+- Framework: None.
+- Env vars: `MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `MUX_TOKEN_ID`, `MUX_TOKEN_SECRET`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `ALLOWED_ORIGINS`.
+- API base URL after deploy: `https://<your-vercel-domain>/api` (e.g., `https://movie-app-backend-eta.vercel.app/api`).
 
 ## 📝 License
 
