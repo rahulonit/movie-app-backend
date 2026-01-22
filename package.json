@@ -2,7 +2,6 @@
   "name": "ott-streaming-backend",
   "version": "1.0.0",
   "description": "Netflix-style OTT streaming backend (Vercel serverless)",
-  "type": "module",
   "private": true,
 
   "scripts": {
