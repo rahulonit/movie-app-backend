@@ -21,8 +21,7 @@ export const createMuxAsset = async (
     const mux = getMuxClient();
     const asset = await mux.Video.Assets.create({
       input: [{ url: videoUrl }],
-      playback_policy: ['public'],
-      mp4_support: 'standard'
+      playback_policy: ['public']
     });
 
     // Wait for asset to be ready and get playback ID
@@ -46,8 +45,7 @@ export const createMuxUploadUrl = async (): Promise<{
     const mux = getMuxClient();
     const upload = await mux.Video.Uploads.create({
       new_asset_settings: {
-        playback_policy: ['public'],
-        mp4_support: 'standard'
+        playback_policy: ['public']
       },
       cors_origin: '*'
     });

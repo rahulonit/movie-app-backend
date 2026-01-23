@@ -36,6 +36,7 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
 };
 
 // Get Mux upload URL for direct video uploads
+// Updated to include debug error details
 export const getMuxUploadUrl = async (_req: Request, res: Response): Promise<void> => {
   try {
     const result = await createMuxUploadUrl();
@@ -48,11 +49,33 @@ export const getMuxUploadUrl = async (_req: Request, res: Response): Promise<voi
         assetId: result.assetId
       }
     });
-  } catch (error) {
-    console.error('Get Mux upload URL error:', error);
+  } catch (error: any) {
+    console.error('Get Mux upload URL error:', JSON.stringify(error, null, 2));
+    let errorMessage = 'Unknown error';
+    let errorDetails: any = null;
+
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = error.stack;
+    } else if (typeof error === 'object') {
+      errorMessage = error.message || error.toString();
+      errorDetails = {
+        type: typeof error,
+        keys: Object.keys(error),
+        response: error.response || error.data,
+        ...error
+      };
+    } else {
+      errorMessage = error.toString();
+    }
+
     res.status(500).json({
       success: false,
-      message: 'Error creating upload URL'
+      message: 'Error creating upload URL',
+      debug: {
+        error: errorMessage,
+        details: errorDetails
+      }
     });
   }
 };
