@@ -80,6 +80,22 @@ export const getMuxUploadUrl = async (_req: Request, res: Response): Promise<voi
   }
 };
 
+// Admin maintenance: sync MongoDB indexes to match schema
+export const syncIndexes = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    await Movie.syncIndexes();
+    await Series.syncIndexes();
+    res.status(200).json({ success: true, message: 'Indexes synced' });
+  } catch (error: any) {
+    console.error('Sync indexes error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error syncing indexes',
+      debug: { error: error?.message || error?.toString() }
+    });
+  }
+};
+
 // Verify Cloudinary and Mux connectivity for admins
 export const checkMediaIntegrations = async (_req: Request, res: Response): Promise<void> => {
   const cloudinaryStatus: { ok: boolean; message: string } = { ok: false, message: '' };

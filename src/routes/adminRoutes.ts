@@ -4,6 +4,7 @@ import {
   uploadImage,
   getMuxUploadUrl,
   checkMediaIntegrations,
+  syncIndexes,
   createMovie,
   getAllMovies,
   updateMovie,
@@ -46,6 +47,9 @@ router.use(authenticate, authorizeAdmin);
 router.post('/upload-image', uploadImageMiddleware.single('image'), uploadImage);
 router.get('/mux-upload-url', getMuxUploadUrl);
 router.get('/integrations/health', checkMediaIntegrations);
+
+// ===== Maintenance =====
+router.post('/maintenance/sync-indexes', syncIndexes);
 
 // ===== Movie Management =====
 router.post(
