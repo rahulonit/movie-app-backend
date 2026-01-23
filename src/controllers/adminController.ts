@@ -143,12 +143,30 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
       isPremium
     } = req.body;
 
-    // Verify Mux asset exists
-    const muxAsset = await getMuxAsset(muxAssetId);
+    let muxAsset;
+    try {
+      muxAsset = await getMuxAsset(muxAssetId);
+    } catch (assetErr: any) {
+      console.error('Mux asset lookup error:', JSON.stringify(assetErr, null, 2));
+      res.status(400).json({
+        success: false,
+        message: 'Invalid Mux asset ID',
+        debug: {
+          error: assetErr?.message || assetErr?.toString(),
+          details: assetErr?.response?.data || assetErr
+        }
+      });
+      return;
+    }
+
     if (!muxAsset || muxAsset.status !== 'ready') {
       res.status(400).json({
         success: false,
-        message: 'Mux asset not ready or not found'
+        message: 'Mux asset not ready or not found',
+        debug: {
+          status: muxAsset?.status,
+          assetId: muxAssetId
+        }
       });
       return;
     }
@@ -175,11 +193,15 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
       message: 'Movie created',
       data: { movie }
     });
-  } catch (error) {
-    console.error('Create movie error:', error);
+  } catch (error: any) {
+    console.error('Create movie error:', JSON.stringify(error, null, 2));
     res.status(500).json({
       success: false,
-      message: 'Error creating movie'
+      message: 'Error creating movie',
+      debug: {
+        error: error?.message || error?.toString(),
+        details: error?.response?.data || error
+      }
     });
   }
 };
