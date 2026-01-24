@@ -297,11 +297,15 @@ export const updateMovie = async (req: Request, res: Response): Promise<void> =>
       message: 'Movie updated',
       data: { movie }
     });
-  } catch (error) {
-    console.error('Update movie error:', error);
+  } catch (error: any) {
+    console.error('Update movie error:', JSON.stringify(error, null, 2));
     res.status(500).json({
       success: false,
-      message: 'Error updating movie'
+      message: 'Error updating movie',
+      debug: {
+        error: error?.message || error?.toString(),
+        details: error?.response?.data || error
+      }
     });
   }
 };
