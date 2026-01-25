@@ -757,3 +757,17 @@ export const deleteEpisode = async (req: Request, res: Response): Promise<void> 
     });
   }
 };
+
+export const rebuildTextIndex = async (req: Request, res: Response) => {
+  try {
+    const Movie = mongoose.model('Movie');
+    await Movie.collection.dropIndex('title_text_description_text');
+    await Movie.collection.createIndex(
+      { title: 'text', description: 'text' },
+      { language_override: 'searchLanguage' }
+    );
+    res.json({ success: true, message: 'Text index rebuilt successfully' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: 'Error rebuilding text index', error: error.message });
+  }
+};

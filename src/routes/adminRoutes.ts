@@ -137,3 +137,6 @@ router.put('/users/:id/block', toggleBlockUser);
 router.delete('/users/:id', deleteUser);
 
 export default router;
+
+// Rebuild text index
+router.post('/maintenance/rebuild-text-index', authenticate, authorizeAdmin, adminController.rebuildTextIndex);
