@@ -5,6 +5,7 @@ import {
   getMuxUploadUrl,
   checkMediaIntegrations,
   syncIndexes,
+  rebuildTextIndex,
   createMovie,
   getAllMovies,
   updateMovie,
@@ -136,7 +137,7 @@ router.put('/users/:id/subscription', updateUserSubscription);
 router.put('/users/:id/block', toggleBlockUser);
 router.delete('/users/:id', deleteUser);
 
-export default router;
+// ===== Maintenance =====
+router.post('/maintenance/rebuild-text-index', rebuildTextIndex);
 
-// Rebuild text index
-router.post('/maintenance/rebuild-text-index', authenticate, authorizeAdmin, adminController.rebuildTextIndex);
+export default router;
