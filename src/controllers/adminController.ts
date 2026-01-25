@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import { Movie } from '../models/Movie';
 import { Series } from '../models/Series';
 import cloudinary, { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '../config/cloudinary';
