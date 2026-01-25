@@ -759,7 +759,7 @@ export const deleteEpisode = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-export const rebuildTextIndex = async (req: Request, res: Response) => {
+export const rebuildTextIndex = async (_req: Request, res: Response): Promise<void> => {
   try {
     const Movie = mongoose.model('Movie');
     await Movie.collection.dropIndex('title_text_description_text');
