@@ -130,8 +130,10 @@ export const searchImdb = async (req: Request, res: Response): Promise<void> => 
     }
 
     console.log('[searchImdb] Searching for:', query);
+    console.log('[searchImdb] OMDB_API_KEY configured:', !!process.env.OMDB_API_KEY);
 
     const results = await searchMovies(query, 'movie');
+    console.log('[searchImdb] Search results received:', results.length, 'movies');
     
     if (results.length === 0) {
       res.status(200).json({

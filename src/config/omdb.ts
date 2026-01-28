@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const OMDB_API_KEY = process.env.OMDB_API_KEY || '';
-const OMDB_BASE_URL = 'https://www.omdbapi.com/?i=tt3896198&apikey=8ed84ac0';
+const OMDB_BASE_URL = 'https://www.omdbapi.com';
 
 export interface OMDbSearchResult {
   Title: string;
@@ -40,6 +40,7 @@ export const searchMovies = async (
   type: 'movie' | 'series' = 'movie'
 ): Promise<OMDbSearchResult[]> => {
   if (!OMDB_API_KEY) {
+    console.error('[OMDb] OMDB_API_KEY not configured');
     throw new Error('OMDB_API_KEY not configured in environment variables');
   }
 
@@ -48,6 +49,7 @@ export const searchMovies = async (
   }
 
   try {
+    console.log('[OMDb] Searching for:', query, 'with key:', OMDB_API_KEY.substring(0, 4) + '...');
     const response = await axios.get(OMDB_BASE_URL, {
       params: {
         apikey: OMDB_API_KEY,
@@ -58,10 +60,14 @@ export const searchMovies = async (
       timeout: 5000
     });
 
+    console.log('[OMDb] Response received:', { Response: response.data.Response, count: response.data.Search?.length });
+
     if (response.data.Response === 'False') {
+      console.log('[OMDb] No results found:', response.data.Error);
       return [];
     }
 
+    console.log('[OMDb] Returning', response.data.Search?.length || 0, 'results');
     return response.data.Search || [];
   } catch (error: any) {
     console.error('[OMDb] Search error:', error?.message);
