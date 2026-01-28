@@ -613,17 +613,30 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
     }
 
     // Verify Cloudflare video exists
-    const cfClient = getCloudflareStreamClient();
-    const videoDetails = await cfClient.getVideoDetails(cloudflareVideoId);
-    if (!videoDetails) {
+    let videoDetails;
+    try {
+      const cfClient = getCloudflareStreamClient();
+      videoDetails = await cfClient.getVideoDetails(cloudflareVideoId);
+    } catch (cfError: any) {
+      console.error('Cloudflare video verification error:', cfError?.message);
       res.status(400).json({
         success: false,
-        message: 'Cloudflare video not found or not ready'
+        message: 'Invalid Cloudflare video ID',
+        error: cfError?.message || 'Video not found'
       });
       return;
     }
 
-    season.episodes.push({
+    if (!videoDetails) {
+      res.status(400).json({
+        success: false,
+        message: 'Cloudflare video not ready'
+      });
+      return;
+    }
+
+    // Add episode to season
+    const newEpisode: any = {
       episodeNumber,
       title,
       description,
@@ -631,8 +644,9 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
       cloudflareVideoId,
       thumbnail,
       views: 0
-    });
+    };
 
+    season.episodes.push(newEpisode);
     await series.save();
 
     res.status(201).json({
@@ -640,11 +654,12 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
       message: 'Episode added',
       data: { episode: season.episodes[season.episodes.length - 1] }
     });
-  } catch (error) {
-    console.error('Add episode error:', error);
+  } catch (error: any) {
+    console.error('Add episode error:', error?.message || error);
     res.status(500).json({
       success: false,
-      message: 'Error adding episode'
+      message: 'Error adding episode',
+      error: error?.message || 'Unknown error'
     });
   }
 };
