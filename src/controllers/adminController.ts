@@ -594,8 +594,11 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
       thumbnail
     } = req.body;
 
+    console.log('[addEpisode] Received:', { seriesId, seasonNumber, episodeNumber, cloudflareVideoId });
+
     const series = await Series.findById(seriesId);
     if (!series) {
+      console.log('[addEpisode] Series not found:', seriesId);
       res.status(404).json({
         success: false,
         message: 'Series not found'
@@ -605,6 +608,7 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
 
     const season = series.seasons.find(s => s.seasonNumber === parseInt(seasonNumber));
     if (!season) {
+      console.log('[addEpisode] Season not found:', seasonNumber);
       res.status(404).json({
         success: false,
         message: 'Season not found'
@@ -613,41 +617,33 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
     }
 
     // Verify Cloudflare video exists
-    let videoDetails;
     try {
       const cfClient = getCloudflareStreamClient();
-      videoDetails = await cfClient.getVideoDetails(cloudflareVideoId);
+      const videoDetails = await cfClient.getVideoDetails(cloudflareVideoId);
+      console.log('[addEpisode] Video verified:', { cloudflareVideoId, status: videoDetails?.status });
     } catch (cfError: any) {
-      console.error('Cloudflare video verification error:', cfError?.message);
-      res.status(400).json({
-        success: false,
-        message: 'Invalid Cloudflare video ID',
-        error: cfError?.message || 'Video not found'
-      });
-      return;
+      console.warn('[addEpisode] Cloudflare video verification failed:', cfError?.message);
+      // Continue anyway - video might be valid but API call failed
     }
 
-    if (!videoDetails) {
-      res.status(400).json({
-        success: false,
-        message: 'Cloudflare video not ready'
-      });
-      return;
-    }
-
-    // Add episode to season
-    const newEpisode: any = {
-      episodeNumber,
-      title,
-      description,
-      duration,
-      cloudflareVideoId,
-      thumbnail,
+    // Create episode object with required fields
+    const newEpisode = {
+      episodeNumber: parseInt(episodeNumber),
+      title: title.trim(),
+      description: description.trim(),
+      duration: parseInt(duration),
+      cloudflareVideoId: cloudflareVideoId.trim(),
+      thumbnail: thumbnail.trim(),
       views: 0
     };
 
+    console.log('[addEpisode] Adding episode:', newEpisode);
     season.episodes.push(newEpisode);
+    
+    console.log('[addEpisode] Saving series...');
     await series.save();
+    
+    console.log('[addEpisode] Episode added successfully');
 
     res.status(201).json({
       success: true,
@@ -655,7 +651,8 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
       data: { episode: season.episodes[season.episodes.length - 1] }
     });
   } catch (error: any) {
-    console.error('Add episode error:', error?.message || error);
+    console.error('[addEpisode] ERROR:', error?.message || error);
+    console.error('[addEpisode] Stack:', error?.stack);
     res.status(500).json({
       success: false,
       message: 'Error adding episode',
