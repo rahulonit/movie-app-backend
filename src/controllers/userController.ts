@@ -285,10 +285,7 @@ export const getMyList = async (req: Request, res: Response): Promise<void> => {
     }
 
     // Populate content details
-    await user.populate({
-      path: 'profiles.myList',
-      select: '-muxAssetId'
-    });
+    await user.populate('profiles.myList');
 
     res.status(200).json({
       success: true,

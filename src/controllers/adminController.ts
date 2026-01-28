@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { Movie } from '../models/Movie';
 import { Series } from '../models/Series';
 import cloudinary, { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '../config/cloudinary';
-import { createMuxUploadUrl, deleteMuxAsset, getMuxAsset, getMuxClient } from '../config/mux';
+import { getCloudflareStreamClient } from '../config/cloudflareStream';
 
 // Upload image to Cloudinary
 export const uploadImage = async (req: Request, res: Response): Promise<void> => {
@@ -36,47 +36,26 @@ export const uploadImage = async (req: Request, res: Response): Promise<void> =>
   }
 };
 
-// Get Mux upload URL for direct video uploads
-// Updated to include debug error details
-export const getMuxUploadUrl = async (_req: Request, res: Response): Promise<void> => {
+// Get Cloudflare Stream upload URL for direct video uploads
+export const getCloudflareUploadUrl = async (_req: Request, res: Response): Promise<void> => {
   try {
-    const result = await createMuxUploadUrl();
+    const cfClient = getCloudflareStreamClient();
+    const result = await cfClient.requestUploadURL();
 
     res.status(200).json({
       success: true,
       message: 'Upload URL created',
       data: {
-        uploadUrl: result.uploadUrl,
-        assetId: result.assetId
+        uploadURL: result.uploadURL,
+        videoId: result.videoId
       }
     });
   } catch (error: any) {
-    console.error('Get Mux upload URL error:', JSON.stringify(error, null, 2));
-    let errorMessage = 'Unknown error';
-    let errorDetails: any = null;
-
-    if (error instanceof Error) {
-      errorMessage = error.message;
-      errorDetails = error.stack;
-    } else if (typeof error === 'object') {
-      errorMessage = error.message || error.toString();
-      errorDetails = {
-        type: typeof error,
-        keys: Object.keys(error),
-        response: error.response || error.data,
-        ...error
-      };
-    } else {
-      errorMessage = error.toString();
-    }
-
+    console.error('Get Cloudflare upload URL error:', error);
     res.status(500).json({
       success: false,
-      message: 'Error creating upload URL',
-      debug: {
-        error: errorMessage,
-        details: errorDetails
-      }
+      message: 'Error getting upload URL',
+      error: error?.message || 'Unknown error'
     });
   }
 };
@@ -97,10 +76,10 @@ export const syncIndexes = async (_req: Request, res: Response): Promise<void> =
   }
 };
 
-// Verify Cloudinary and Mux connectivity for admins
+// Verify Cloudinary and Cloudflare connectivity for admins
 export const checkMediaIntegrations = async (_req: Request, res: Response): Promise<void> => {
   const cloudinaryStatus: { ok: boolean; message: string } = { ok: false, message: '' };
-  const muxStatus: { ok: boolean; message: string } = { ok: false, message: '' };
+  const cloudflareStatus: { ok: boolean; message: string } = { ok: false, message: '' };
 
   try {
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
@@ -115,28 +94,23 @@ export const checkMediaIntegrations = async (_req: Request, res: Response): Prom
   }
 
   try {
-    if (!process.env.MUX_TOKEN_ID || !process.env.MUX_TOKEN_SECRET) {
-      throw new Error('Missing Mux environment variables');
+    if (!process.env.CLOUDFLARE_ACCOUNT_ID || !process.env.CLOUDFLARE_API_TOKEN) {
+      throw new Error('Missing Cloudflare environment variables');
     }
 
-    const mux = getMuxClient();
-    const assets = await mux.Video.Assets.list({ limit: 1 });
-    muxStatus.ok = true;
-    muxStatus.message = Array.isArray((assets as any).data)
-      ? 'Mux authenticated'
-      : 'Mux reachable';
+    const cfClient = getCloudflareStreamClient();
+    await cfClient.listVideos(1);
+    cloudflareStatus.ok = true;
+    cloudflareStatus.message = 'Cloudflare Stream authenticated';
   } catch (error: any) {
-    const detail = Array.isArray(error?.messages)
-      ? error.messages.join(', ')
-      : error?.message;
-    muxStatus.message = detail || 'Mux check failed';
+    cloudflareStatus.message = error?.message || 'Cloudflare check failed';
   }
 
-  res.status(cloudinaryStatus.ok && muxStatus.ok ? 200 : 503).json({
-    success: cloudinaryStatus.ok && muxStatus.ok,
+  res.status(cloudinaryStatus.ok && cloudflareStatus.ok ? 200 : 503).json({
+    success: cloudinaryStatus.ok && cloudflareStatus.ok,
     data: {
       cloudinary: cloudinaryStatus,
-      mux: muxStatus
+      cloudflare: cloudflareStatus
     }
   });
 };
@@ -154,36 +128,21 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
       rating,
       poster,
       trailerUrl,
-      muxPlaybackId,
-      muxAssetId,
+      cloudflareVideoId,
       maturityRating,
       isPremium
     } = req.body;
 
-    let muxAsset;
+    // Verify Cloudflare video exists
     try {
-      muxAsset = await getMuxAsset(muxAssetId);
-    } catch (assetErr: any) {
-      console.error('Mux asset lookup error:', JSON.stringify(assetErr, null, 2));
+      const cfClient = getCloudflareStreamClient();
+      await cfClient.getVideoDetails(cloudflareVideoId);
+    } catch (videoErr: any) {
+      console.error('Cloudflare video lookup error:', videoErr);
       res.status(400).json({
         success: false,
-        message: 'Invalid Mux asset ID',
-        debug: {
-          error: assetErr?.message || assetErr?.toString(),
-          details: assetErr?.response?.data || assetErr
-        }
-      });
-      return;
-    }
-
-    if (!muxAsset || muxAsset.status !== 'ready') {
-      res.status(400).json({
-        success: false,
-        message: 'Mux asset not ready or not found',
-        debug: {
-          status: muxAsset?.status,
-          assetId: muxAssetId
-        }
+        message: 'Invalid Cloudflare video ID',
+        error: videoErr?.message || 'Video not found'
       });
       return;
     }
@@ -198,8 +157,7 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
       rating: rating || 0,
       poster,
       trailerUrl,
-      muxPlaybackId,
-      muxAssetId,
+      cloudflareVideoId,
       maturityRating,
       isPremium: isPremium || false,
       isPublished: true
@@ -339,11 +297,12 @@ export const deleteMovie = async (req: Request, res: Response): Promise<void> =>
       console.error('Cloudinary deletion error:', cloudinaryError);
     }
 
-    // Delete from Mux
+    // Delete from Cloudflare Stream
     try {
-      await deleteMuxAsset(movie.muxAssetId);
-    } catch (muxError) {
-      console.error('Mux deletion error:', muxError);
+      const cfClient = getCloudflareStreamClient();
+      await cfClient.deleteVideo(movie.cloudflareVideoId);
+    } catch (cfError) {
+      console.error('Cloudflare deletion error:', cfError);
     }
 
     // Delete from database
@@ -516,13 +475,14 @@ export const deleteSeries = async (req: Request, res: Response): Promise<void> =
       return;
     }
 
-    // Delete all episode videos from Mux
+    // Delete all episode videos from Cloudflare Stream
+    const cfClient = getCloudflareStreamClient();
     for (const season of series.seasons) {
       for (const episode of season.episodes) {
         try {
-          await deleteMuxAsset(episode.muxAssetId);
-        } catch (muxError) {
-          console.error(`Error deleting episode ${episode._id}:`, muxError);
+          await cfClient.deleteVideo(episode.cloudflareVideoId);
+        } catch (cfError) {
+          console.error(`Error deleting episode ${episode._id}:`, cfError);
         }
 
         // Delete episode thumbnail
@@ -630,8 +590,7 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
       title,
       description,
       duration,
-      muxPlaybackId,
-      muxAssetId,
+      cloudflareVideoId,
       thumbnail
     } = req.body;
 
@@ -653,12 +612,13 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Verify Mux asset
-    const muxAsset = await getMuxAsset(muxAssetId);
-    if (!muxAsset || muxAsset.status !== 'ready') {
+    // Verify Cloudflare video exists
+    const cfClient = getCloudflareStreamClient();
+    const videoDetails = await cfClient.getVideoDetails(cloudflareVideoId);
+    if (!videoDetails) {
       res.status(400).json({
         success: false,
-        message: 'Mux asset not ready or not found'
+        message: 'Cloudflare video not found or not ready'
       });
       return;
     }
@@ -668,8 +628,7 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
       title,
       description,
       duration,
-      muxPlaybackId,
-      muxAssetId,
+      cloudflareVideoId,
       thumbnail,
       views: 0
     });
@@ -727,11 +686,12 @@ export const deleteEpisode = async (req: Request, res: Response): Promise<void> 
 
     const episode = season.episodes[episodeIndex];
 
-    // Delete from Mux
+    // Delete from Cloudflare Stream
     try {
-      await deleteMuxAsset(episode.muxAssetId);
-    } catch (muxError) {
-      console.error('Mux deletion error:', muxError);
+      const cfClient = getCloudflareStreamClient();
+      await cfClient.deleteVideo(episode.cloudflareVideoId);
+    } catch (cfError) {
+      console.error('Cloudflare deletion error:', cfError);
     }
 
     // Delete thumbnail from Cloudinary

@@ -18,19 +18,19 @@ export const getHomeFeed = async (req: Request, res: Response): Promise<void> =>
     const trendingMovies = await Movie.find({ isPublished: true })
       .sort({ views: -1 })
       .limit(limit)
-      .select('-muxAssetId');
+      ;
 
     // New releases
     const newReleases = await Movie.find({ isPublished: true })
       .sort({ createdAt: -1 })
       .limit(limit)
-      .select('-muxAssetId');
+      ;
 
     // Trending series
     const trendingSeries = await Series.find({ isPublished: true })
       .sort({ totalViews: -1 })
       .limit(limit)
-      .select('-muxAssetId -seasons.episodes.muxAssetId');
+      .select('-muxAssetId');
 
     // Continue watching (if user has watch history)
     let continueWatching: any[] = [];
@@ -42,7 +42,7 @@ export const getHomeFeed = async (req: Request, res: Response): Promise<void> =>
 
       for (const history of recentHistory) {
         if (history.contentType === 'Movie') {
-          const movie = await Movie.findById(history.contentId).select('-muxAssetId');
+          const movie = await Movie.findById(history.contentId);
           if (movie) {
             continueWatching.push({
               ...movie.toObject(),
@@ -52,7 +52,7 @@ export const getHomeFeed = async (req: Request, res: Response): Promise<void> =>
           }
         } else {
           const series = await Series.findById(history.contentId)
-            .select('-seasons.episodes.muxAssetId');
+            ;
           if (series) {
             continueWatching.push({
               ...series.toObject(),
@@ -72,7 +72,7 @@ export const getHomeFeed = async (req: Request, res: Response): Promise<void> =>
     })
       .sort({ views: -1 })
       .limit(limit)
-      .select('-muxAssetId');
+      ;
 
     // Comedy movies
     const comedyMovies = await Movie.find({
@@ -81,7 +81,7 @@ export const getHomeFeed = async (req: Request, res: Response): Promise<void> =>
     })
       .sort({ views: -1 })
       .limit(limit)
-      .select('-muxAssetId');
+      ;
 
     res.status(200).json({
       success: true,
@@ -132,8 +132,7 @@ export const getMovieById = async (req: Request, res: Response): Promise<void> =
           data: {
             movie: {
               ...movie.toObject(),
-              muxPlaybackId: null,
-              muxAssetId: null
+              cloudflareVideoId: null
             }
           }
         });
@@ -192,8 +191,7 @@ export const getSeriesById = async (req: Request, res: Response): Promise<void> 
                   ...seasonObj,
                   episodes: seasonObj.episodes.map((e: any) => ({
                     ...(e.toObject ? e.toObject() : e),
-                    muxPlaybackId: null,
-                    muxAssetId: null
+                    cloudflareVideoId: null
                   }))
                 };
               })
@@ -248,7 +246,7 @@ export const searchContent = async (req: Request, res: Response): Promise<void> 
     // Search movies
     if (!type || type === 'movie') {
       const movies = await Movie.find(query)
-        .select('-muxAssetId')
+        
         .skip(skip)
         .limit(limit)
         .sort(q ? { score: { $meta: 'textScore' } } : { createdAt: -1 });
@@ -260,7 +258,7 @@ export const searchContent = async (req: Request, res: Response): Promise<void> 
     // Search series
     if (!type || type === 'series') {
       const series = await Series.find(query)
-        .select('-seasons.episodes.muxAssetId')
+        
         .skip(skip)
         .limit(limit)
         .sort(q ? { score: { $meta: 'textScore' } } : { createdAt: -1 });
@@ -302,7 +300,7 @@ export const getMoviesByGenre = async (req: Request, res: Response): Promise<voi
       isPublished: true,
       genres: genre
     })
-      .select('-muxAssetId')
+      
       .skip(skip)
       .limit(limit)
       .sort({ views: -1 });

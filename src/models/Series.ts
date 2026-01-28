@@ -8,8 +8,7 @@ export interface IEpisode {
   title: string;
   description: string;
   duration: number; // in minutes
-  muxPlaybackId: string;
-  muxAssetId: string;
+  cloudflareVideoId: string; // Cloudflare Stream video ID
   thumbnail: string; // Cloudinary URL
   views: number;
   toObject?: () => any;
@@ -63,11 +62,7 @@ const episodeSchema = new Schema<IEpisode>({
     required: true,
     min: 1
   },
-  muxPlaybackId: {
-    type: String,
-    required: true
-  },
-  muxAssetId: {
+  cloudflareVideoId: {
     type: String,
     required: true
   },

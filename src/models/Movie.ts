@@ -59,8 +59,7 @@ export interface IMovie extends Document {
   rating: number;
   poster: IPoster;
   trailerUrl?: string;
-  muxPlaybackId: string;
-  muxAssetId: string; // For deletion purposes
+  cloudflareVideoId: string; // Cloudflare Stream video ID
   maturityRating: MaturityRating;
   isPremium: boolean;
   isPublished: boolean;
@@ -153,13 +152,10 @@ const movieSchema = new Schema<IMovie>({
       message: 'Invalid trailer URL format'
     }
   },
-  muxPlaybackId: {
+  cloudflareVideoId: {
     type: String,
-    required: true
-  },
-  muxAssetId: {
-    type: String,
-    required: true
+    required: true,
+    unique: true
   },
   maturityRating: {
     type: String,
