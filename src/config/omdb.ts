@@ -177,7 +177,12 @@ export const parseMovieDetails = (omdbData: OMDbMovieDetails) => {
     duration: parseDuration(omdbData.Runtime),
     imdbLink: `https://www.imdb.com/title/${omdbData.imdbID}/`,
     posterUrl: omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : null,
-    ratings: omdbData.Ratings ? omdbData.Ratings.map((r: any) => ({\n      source: r.Source,\n      value: r.Value\n    })) : []\n  };\n};
+    ratings: omdbData.Ratings ? omdbData.Ratings.map((r: any) => ({
+      source: r.Source,
+      value: r.Value
+    })) : []
+  };
+};
 
 /**
  * Complete workflow: search and fetch movie details
