@@ -49,6 +49,11 @@ export interface IPoster {
   horizontal: string; // Cloudinary URL
 }
 
+export interface IRating {
+  source: string;
+  value: string;
+}
+
 export interface IMovie extends Document {
   title: string;
   description: string;
@@ -66,11 +71,20 @@ export interface IMovie extends Document {
   views: number;
   // IMDB enrichment fields
   imdbId?: string;
-  director?: string;
-  writer?: string;
-  stars?: string[]; // Top cast members
   imdbRating?: number;
   imdbLink?: string;
+  rated?: string; // PG-13, R, etc.
+  released?: string; // Release date
+  runtime?: string; // "136 min"
+  director?: string;
+  writer?: string;
+  actors?: string; // Comma-separated actors
+  plot?: string; // Full plot from OMDB
+  languages?: string; // Comma-separated languages
+  country?: string; // Country of origin
+  awards?: string; // Awards text
+  omdbPoster?: string; // OMDB poster URL
+  ratings?: IRating[]; // Multiple rating sources
   createdAt: Date;
   updatedAt: Date;
 }
@@ -188,16 +202,6 @@ const movieSchema = new Schema<IMovie>({
     sparse: true,
     unique: true
   },
-  director: {
-    type: String
-  },
-  writer: {
-    type: String
-  },
-  stars: {
-    type: [String],
-    default: []
-  },
   imdbRating: {
     type: Number,
     min: 0,
@@ -211,6 +215,52 @@ const movieSchema = new Schema<IMovie>({
       },
       message: 'Invalid IMDB URL format'
     }
+  },
+  rated: {
+    type: String
+  },
+  released: {
+    type: String
+  },
+  runtime: {
+    type: String
+  },
+  director: {
+    type: String
+  },
+  writer: {
+    type: String
+  },
+  actors: {
+    type: String
+  },
+  plot: {
+    type: String
+  },
+  languages: {
+    type: String
+  },
+  country: {
+    type: String
+  },
+  awards: {
+    type: String
+  },
+  omdbPoster: {
+    type: String,
+    validate: {
+      validator: function(url: string) {
+        return !url || /^https?:\/\/.+/.test(url);
+      },
+      message: 'Invalid poster URL format'
+    }
+  },
+  ratings: {
+    type: [{
+      source: { type: String, required: true },
+      value: { type: String, required: true }
+    }],
+    default: []
   }
 }, {
   timestamps: true,

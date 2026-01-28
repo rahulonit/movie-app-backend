@@ -199,11 +199,20 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
       isPremium,
       // Optional IMDB enrichment fields
       imdbId,
+      imdbRating,
+      imdbLink,
+      rated,
+      released,
+      runtime,
       director,
       writer,
-      stars,
-      imdbRating,
-      imdbLink
+      actors,
+      plot,
+      languages,
+      country,
+      awards,
+      omdbPoster,
+      ratings
     } = req.body;
 
     // Verify Cloudflare video exists
@@ -238,11 +247,20 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
 
     // Add IMDB enrichment fields if provided
     if (imdbId) movieData.imdbId = imdbId;
-    if (director) movieData.director = director;
-    if (writer) movieData.writer = writer;
-    if (stars && Array.isArray(stars)) movieData.stars = stars;
     if (imdbRating) movieData.imdbRating = imdbRating;
     if (imdbLink) movieData.imdbLink = imdbLink;
+    if (rated) movieData.rated = rated;
+    if (released) movieData.released = released;
+    if (runtime) movieData.runtime = runtime;
+    if (director) movieData.director = director;
+    if (writer) movieData.writer = writer;
+    if (actors) movieData.actors = actors;
+    if (plot) movieData.plot = plot;
+    if (languages) movieData.languages = languages;
+    if (country) movieData.country = country;
+    if (awards) movieData.awards = awards;
+    if (omdbPoster) movieData.omdbPoster = omdbPoster;
+    if (ratings && Array.isArray(ratings)) movieData.ratings = ratings;
 
     const movie = await Movie.create(movieData);
 

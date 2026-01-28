@@ -161,18 +161,23 @@ export const parseMovieDetails = (omdbData: OMDbMovieDetails) => {
     imdbId: omdbData.imdbID,
     title: omdbData.Title,
     description: omdbData.Plot || '',
+    plot: omdbData.Plot || '',
     director: omdbData.Director || 'Unknown',
     writer: omdbData.Writer || 'Unknown',
-    stars: parseActors(omdbData.Actors),
+    actors: omdbData.Actors || 'Unknown',
     genres: parseGenres(omdbData.Genre),
-    languages: parseLanguages(omdbData.Language),
+    languages: omdbData.Language || 'English',
     releaseYear: parseYear(omdbData.Year),
+    released: omdbData.Released || '',
+    rated: omdbData.Rated || '',
+    runtime: omdbData.Runtime || '',
+    country: omdbData.Country || '',
+    awards: omdbData.Awards || '',
     imdbRating: parseRating(omdbData.imdbRating),
     duration: parseDuration(omdbData.Runtime),
     imdbLink: `https://www.imdb.com/title/${omdbData.imdbID}/`,
-    posterUrl: omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : null
-  };
-};
+    posterUrl: omdbData.Poster && omdbData.Poster !== 'N/A' ? omdbData.Poster : null,
+    ratings: omdbData.Ratings ? omdbData.Ratings.map((r: any) => ({\n      source: r.Source,\n      value: r.Value\n    })) : []\n  };\n};
 
 /**
  * Complete workflow: search and fetch movie details
