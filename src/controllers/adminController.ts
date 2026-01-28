@@ -151,11 +151,9 @@ export const searchImdb = async (req: Request, res: Response): Promise<void> => 
 
           const parsed = parseMovieDetails(details);
           return {
-            imdbId: result.imdbID,
-            title: result.Title,
+            ...parsed,
             year: result.Year,
-            poster: result.Poster,
-            ...parsed
+            poster: result.Poster
           };
         } catch (error: any) {
           console.warn('[searchImdb] Failed to fetch details for', result.imdbID, error?.message);
