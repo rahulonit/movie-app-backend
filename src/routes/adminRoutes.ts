@@ -4,6 +4,7 @@ import {
   uploadImage,
   getCloudflareUploadUrl,
   checkMediaIntegrations,
+  searchImdb,
   syncIndexes,
   rebuildTextIndex,
   createMovie,
@@ -48,6 +49,9 @@ router.use(authenticate, authorizeAdmin);
 router.post('/upload-image', uploadImageMiddleware.single('image'), uploadImage);
 router.get('/cloudflare-upload-url', getCloudflareUploadUrl);
 router.get('/integrations/health', checkMediaIntegrations);
+
+// ===== IMDB Integration =====
+router.get('/search-imdb', searchImdb);
 
 // ===== Maintenance =====
 router.post('/maintenance/sync-indexes', syncIndexes);

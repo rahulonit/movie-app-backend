@@ -64,6 +64,13 @@ export interface IMovie extends Document {
   isPremium: boolean;
   isPublished: boolean;
   views: number;
+  // IMDB enrichment fields
+  imdbId?: string;
+  director?: string;
+  writer?: string;
+  stars?: string[]; // Top cast members
+  imdbRating?: number;
+  imdbLink?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -174,6 +181,36 @@ const movieSchema = new Schema<IMovie>({
     type: Number,
     default: 0,
     min: 0
+  },
+  // IMDB enrichment fields
+  imdbId: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
+  director: {
+    type: String
+  },
+  writer: {
+    type: String
+  },
+  stars: {
+    type: [String],
+    default: []
+  },
+  imdbRating: {
+    type: Number,
+    min: 0,
+    max: 10
+  },
+  imdbLink: {
+    type: String,
+    validate: {
+      validator: function(url: string) {
+        return !url || /^https?:\/\/.+/.test(url);
+      },
+      message: 'Invalid IMDB URL format'
+    }
   }
 }, {
   timestamps: true,

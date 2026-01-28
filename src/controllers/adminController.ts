@@ -4,6 +4,7 @@ import { Movie } from '../models/Movie';
 import { Series } from '../models/Series';
 import cloudinary, { uploadToCloudinary, deleteFromCloudinary, extractPublicId } from '../config/cloudinary';
 import { getCloudflareStreamClient } from '../config/cloudflareStream';
+import { searchMovies, getMovieDetails, parseMovieDetails } from '../config/omdb';
 
 // Upload image to Cloudinary
 export const uploadImage = async (req: Request, res: Response): Promise<void> => {
@@ -115,6 +116,71 @@ export const checkMediaIntegrations = async (_req: Request, res: Response): Prom
   });
 };
 
+// Search movie on IMDB and fetch enriched data
+export const searchImdb = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { query } = req.query;
+
+    if (!query || typeof query !== 'string') {
+      res.status(400).json({
+        success: false,
+        message: 'Search query required'
+      });
+      return;
+    }
+
+    console.log('[searchImdb] Searching for:', query);
+
+    const results = await searchMovies(query, 'movie');
+    
+    if (results.length === 0) {
+      res.status(200).json({
+        success: true,
+        message: 'No results found',
+        data: []
+      });
+      return;
+    }
+
+    // Fetch detailed info for top 3 results
+    const detailedResults = await Promise.all(
+      results.slice(0, 3).map(async (result) => {
+        try {
+          const details = await getMovieDetails(result.imdbID, true);
+          if (!details) return null;
+
+          const parsed = parseMovieDetails(details);
+          return {
+            imdbId: result.imdbID,
+            title: result.Title,
+            year: result.Year,
+            poster: result.Poster,
+            ...parsed
+          };
+        } catch (error: any) {
+          console.warn('[searchImdb] Failed to fetch details for', result.imdbID, error?.message);
+          return null;
+        }
+      })
+    );
+
+    const filtered = detailedResults.filter(r => r !== null);
+
+    res.status(200).json({
+      success: true,
+      message: `Found ${filtered.length} result(s)`,
+      data: filtered
+    });
+  } catch (error: any) {
+    console.error('[searchImdb] Error:', error?.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error searching IMDB',
+      error: error?.message || 'Unknown error'
+    });
+  }
+};
+
 // Create movie
 export const createMovie = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -130,7 +196,14 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
       trailerUrl,
       cloudflareVideoId,
       maturityRating,
-      isPremium
+      isPremium,
+      // Optional IMDB enrichment fields
+      imdbId,
+      director,
+      writer,
+      stars,
+      imdbRating,
+      imdbLink
     } = req.body;
 
     // Verify Cloudflare video exists
@@ -147,7 +220,7 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
       return;
     }
 
-    const movie = await Movie.create({
+    const movieData: any = {
       title,
       description,
       genres,
@@ -161,7 +234,17 @@ export const createMovie = async (req: Request, res: Response): Promise<void> =>
       maturityRating,
       isPremium: isPremium || false,
       isPublished: true
-    });
+    };
+
+    // Add IMDB enrichment fields if provided
+    if (imdbId) movieData.imdbId = imdbId;
+    if (director) movieData.director = director;
+    if (writer) movieData.writer = writer;
+    if (stars && Array.isArray(stars)) movieData.stars = stars;
+    if (imdbRating) movieData.imdbRating = imdbRating;
+    if (imdbLink) movieData.imdbLink = imdbLink;
+
+    const movie = await Movie.create(movieData);
 
     res.status(201).json({
       success: true,
