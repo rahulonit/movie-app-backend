@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const OMDB_API_KEY = process.env.OMDB_API_KEY || '';
-const OMDB_BASE_URL = 'https://www.omdbapi.com/?i=tt3896198&apikey=8ed84ac0';
+const OMDB_BASE_URL = 'https://www.omdbapi.com';
 
 export interface OMDbSearchResult {
   Title: string;
