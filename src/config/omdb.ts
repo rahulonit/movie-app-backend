@@ -11,6 +11,11 @@ export interface OMDbSearchResult {
   Poster: string;
 }
 
+export interface OMDbRating {
+  Source: string;
+  Value: string;
+}
+
 export interface OMDbMovieDetails {
   Title: string;
   Year: string;
@@ -29,6 +34,7 @@ export interface OMDbMovieDetails {
   imdbRating: string;
   imdbID: string;
   Type: 'movie' | 'series';
+  Ratings?: OMDbRating[];
 }
 
 /**
@@ -130,21 +136,6 @@ export const parseMovieDetails = (omdbData: OMDbMovieDetails) => {
       .split(',')
       .map(g => g.trim())
       .filter(g => g.length > 0);
-  };
-
-  const parseActors = (actorStr: string): string[] => {
-    return actorStr
-      .split(',')
-      .map(a => a.trim())
-      .filter(a => a.length > 0)
-      .slice(0, 5); // Top 5 cast members
-  };
-
-  const parseLanguages = (langStr: string): string[] => {
-    return langStr
-      .split(',')
-      .map(l => l.trim())
-      .filter(l => l.length > 0);
   };
 
   const parseYear = (yearStr: string): number => {
