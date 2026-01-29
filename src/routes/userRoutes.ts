@@ -38,7 +38,8 @@ router.post(
   '/my-list/add',
   [
     body('profileId').notEmpty().withMessage('Profile ID required'),
-    body('contentId').notEmpty().withMessage('Content ID required')
+    body('contentId').notEmpty().withMessage('Content ID required'),
+    body('contentType').isIn(['Movie', 'Series']).withMessage('Valid content type required')
   ],
   validate,
   addToMyList

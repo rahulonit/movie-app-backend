@@ -111,8 +111,9 @@ const profileSchema = new Schema<IProfile>({
   },
   watchHistory: [watchHistorySchema],
   myList: [{
-    type: Schema.Types.ObjectId,
-    refPath: 'contentType'
+    type: Schema.Types.ObjectId
+    // Note: myList contains references to both Movie and Series documents
+    // Type is determined at application level when querying content
   }]
 }, { _id: true });
 
