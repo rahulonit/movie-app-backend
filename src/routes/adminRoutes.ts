@@ -13,10 +13,12 @@ import {
   deleteMovie,
   createSeries,
   getAllSeries,
+  getSeriesById,
   updateSeries,
   deleteSeries,
   addSeason,
   addEpisode,
+  updateEpisode,
   deleteEpisode
 } from '../controllers/adminController';
 import {
@@ -95,6 +97,7 @@ router.post(
   createSeries
 );
 router.get('/series', getAllSeries);
+router.get('/series/:id', getSeriesById);
 router.put('/series/:id', updateSeries);
 router.delete('/series/:id', deleteSeries);
 
@@ -119,6 +122,10 @@ router.post(
   ],
   validate,
   addEpisode
+);
+router.put(
+  '/series/:seriesId/seasons/:seasonNumber/episodes/:episodeId',
+  updateEpisode
 );
 router.delete('/series/:seriesId/seasons/:seasonNumber/episodes/:episodeId', deleteEpisode);
 

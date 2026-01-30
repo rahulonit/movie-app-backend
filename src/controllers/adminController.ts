@@ -762,6 +762,102 @@ export const addEpisode = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+// Get series by ID (admin)
+export const getSeriesById = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'Invalid series ID'
+      });
+      return;
+    }
+
+    const series = await Series.findById(id);
+
+    if (!series) {
+      res.status(404).json({
+        success: false,
+        message: 'Series not found'
+      });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: series
+    });
+  } catch (error) {
+    console.error('Get series by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching series'
+    });
+  }
+};
+
+// Update episode
+export const updateEpisode = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { seriesId, seasonNumber, episodeId } = req.params;
+    const updates = req.body;
+
+    const series = await Series.findById(seriesId);
+    if (!series) {
+      res.status(404).json({
+        success: false,
+        message: 'Series not found'
+      });
+      return;
+    }
+
+    const season = series.seasons.find(s => s.seasonNumber === parseInt(seasonNumber));
+    if (!season) {
+      res.status(404).json({
+        success: false,
+        message: 'Season not found'
+      });
+      return;
+    }
+
+    const episode = season.episodes.find(
+      e => e._id?.toString() === episodeId
+    );
+
+    if (!episode) {
+      res.status(404).json({
+        success: false,
+        message: 'Episode not found'
+      });
+      return;
+    }
+
+    // Update episode fields
+    if (updates.episodeNumber !== undefined) episode.episodeNumber = updates.episodeNumber;
+    if (updates.title !== undefined) episode.title = updates.title;
+    if (updates.description !== undefined) episode.description = updates.description;
+    if (updates.duration !== undefined) episode.duration = updates.duration;
+    if (updates.cloudflareVideoId !== undefined) episode.cloudflareVideoId = updates.cloudflareVideoId;
+    if (updates.thumbnail !== undefined) episode.thumbnail = updates.thumbnail;
+
+    await series.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Episode updated',
+      data: { episode }
+    });
+  } catch (error) {
+    console.error('Update episode error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating episode'
+    });
+  }
+};
+
 // Delete episode
 export const deleteEpisode = async (req: Request, res: Response): Promise<void> => {
   try {
