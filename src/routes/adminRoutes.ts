@@ -125,6 +125,15 @@ router.post(
 );
 router.put(
   '/series/:seriesId/seasons/:seasonNumber/episodes/:episodeId',
+  [
+    body('episodeNumber').optional().isInt({ min: 1 }).withMessage('Valid episode number required'),
+    body('title').optional().trim().notEmpty().withMessage('Title required'),
+    body('description').optional().trim().notEmpty().withMessage('Description required'),
+    body('duration').optional().isInt({ min: 1 }).withMessage('Valid duration required'),
+    body('cloudflareVideoId').optional().notEmpty().withMessage('Cloudflare video ID required'),
+    body('thumbnail').optional().isURL().withMessage('Valid thumbnail URL required')
+  ],
+  validate,
   updateEpisode
 );
 router.delete('/series/:seriesId/seasons/:seasonNumber/episodes/:episodeId', deleteEpisode);
