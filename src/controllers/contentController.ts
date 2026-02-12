@@ -1,3 +1,68 @@
+// Collaborative filtering: recommend content based on similar users' watch history
+export const getCollaborativeRecommendations = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = (req as any).user?.userId;
+    const { profileId } = req.query;
+    const limit = 10;
+
+    // Get current user and active profile
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ success: false, message: 'User not found' });
+      return;
+    }
+    const profile = profileId
+      ? user.profiles.find((p: any) => p._id?.toString() === profileId)
+      : user.profiles[0];
+    if (!profile) {
+      res.status(404).json({ success: false, message: 'Profile not found' });
+      return;
+    }
+
+    // Get watched content IDs for this profile
+    const watchedIds = profile.watchHistory.map((h: any) => h.contentId.toString());
+    if (watchedIds.length === 0) {
+      // Fallback: trending
+      const trending = await Movie.find({ isPublished: true }).sort({ views: -1 }).limit(limit);
+      res.status(200).json({ success: true, data: trending });
+      return;
+    }
+
+    // Find other users who watched the same content
+    const similarProfiles = await User.aggregate([
+      { $unwind: '$profiles' },
+      { $match: { 'profiles.watchHistory.contentId': { $in: profile.watchHistory.map((h: any) => h.contentId) } } },
+      { $project: { profiles: 1 } }
+    ]);
+
+    // Collect content watched by similar users (excluding already watched by this profile)
+    const similarWatchedIds = new Set<string>();
+    for (const u of similarProfiles) {
+      for (const h of u.profiles.watchHistory) {
+        const idStr = h.contentId.toString();
+        if (!watchedIds.includes(idStr)) {
+          similarWatchedIds.add(idStr);
+        }
+      }
+    }
+
+    // Fetch recommended content (movies and series)
+    const movieRecs = await Movie.find({ _id: { $in: Array.from(similarWatchedIds) }, isPublished: true }).limit(limit);
+    const seriesRecs = await Series.find({ _id: { $in: Array.from(similarWatchedIds) }, isPublished: true }).limit(limit);
+    let recommendations = [...movieRecs, ...seriesRecs].slice(0, limit);
+
+    // Fallback: trending if not enough
+    if (recommendations.length < limit) {
+      const trending = await Movie.find({ isPublished: true, _id: { $nin: watchedIds } }).sort({ views: -1 }).limit(limit - recommendations.length);
+      recommendations = [...recommendations, ...trending];
+    }
+
+    res.status(200).json({ success: true, data: recommendations });
+  } catch (error) {
+    console.error('Collaborative recommendations error:', error);
+    res.status(500).json({ success: false, message: 'Error fetching recommendations' });
+  }
+};
 import { Request, Response } from 'express';
 import { Movie } from '../models/Movie';
 import { Series } from '../models/Series';

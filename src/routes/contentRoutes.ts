@@ -5,7 +5,8 @@ import {
   getSeriesById,
   searchContent,
   getMoviesByGenre,
-  getRelatedContent
+  getRelatedContent,
+  getCollaborativeRecommendations
 } from '../controllers/contentController';
 import { authenticate } from '../middleware/auth';
 
@@ -16,6 +17,8 @@ router.use(authenticate);
 
 // Routes - order matters! Specific routes before generic ID routes
 router.get('/home', getHomeFeed);
+// Personalized recommendations (collaborative filtering)
+router.get('/recommendations', getCollaborativeRecommendations);
 router.get('/search', searchContent);
 router.get('/movies/genre/:genre', getMoviesByGenre);
 // Related content route - uses /content/:id/related path

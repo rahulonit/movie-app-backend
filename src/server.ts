@@ -14,6 +14,7 @@ import authRoutes from "./routes/authRoutes";
 import contentRoutes from "./routes/contentRoutes";
 import userRoutes from "./routes/userRoutes";
 import adminRoutes from "./routes/adminRoutes";
+import playbackRoutes from "./routes/playbackRoutes";
 
 const app = express();
 
@@ -39,6 +40,7 @@ app.get("/api/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api", contentRoutes);
 app.use("/api", userRoutes);
+app.use("/api", playbackRoutes);
 app.use("/api/admin", adminRoutes);
 
 // ❌ NO app.listen()

@@ -22,13 +22,13 @@ const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET ?? '';
 
 // Generate JWT access token
 export const generateAccessToken = (userId: string, role: string): string => {
-  const options: SignOptions = { expiresIn: (process.env.JWT_EXPIRE ?? '15m') as StringValue | number };
+  const options: SignOptions = { expiresIn: (process.env.JWT_EXPIRE ?? '24h') as StringValue | number };
   return jwt.sign({ userId, role }, jwtSecret, options);
 };
 
 // Generate JWT refresh token
 export const generateRefreshToken = (userId: string): string => {
-  const options: SignOptions = { expiresIn: (process.env.JWT_REFRESH_EXPIRE ?? '7d') as StringValue | number };
+  const options: SignOptions = { expiresIn: (process.env.JWT_REFRESH_EXPIRE ?? '24h') as StringValue | number };
   return jwt.sign({ userId }, jwtRefreshSecret, options);
 };
 
